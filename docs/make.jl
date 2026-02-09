@@ -16,6 +16,7 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
+        "Mogi & McTigue Models" => "mogi_mctigue.md",
         "API" => "api.md",
     ],
 )
