@@ -212,66 +212,53 @@ axislegend(ax, position=:lt)
 fig2
 ```
 
-### Displacement as a Function of Depth (cf. Figure 4)
+### Maximum Displacement vs. Source Depth
 
-The effect of source depth on median differences between Mogi and McTigue models.
+The maximum vertical displacement ``U_{z,max}`` (at ``x=0``) decreases rapidly with
+increasing source depth for both models.
 
 ```@example mogi_mctigue
-fig3 = Figure(size=(800, 400))
-ax_ur3 = Axis(fig3[1, 1], xlabel="ε", ylabel="ΔUr (%)",
-    title="Mogi-McTigue Ur Difference")
-ax_uz3 = Axis(fig3[1, 2], xlabel="ε", ylabel="ΔUz (%)",
-    title="Mogi-McTigue Uz Difference")
+fig3 = Figure(size=(700, 500))
+ax3 = Axis(fig3[1, 1], xlabel="Source depth d (km)", ylabel="Uz_max (mm)",
+    title="Maximum Vertical Displacement vs. Depth")
 
-for (j, d_val) in enumerate(depths)
-    diff_ur = Float64[]
-    diff_uz = Float64[]
+d_range = range(1000, 13000, length=50)
+radii = [500.0, 1000.0, 2000.0]
+colors_m = [:blue, :red, :green]
+colors_mc = [:cyan, :orange, :lightgreen]
+labels_a = ["a = 0.5 km", "a = 1.0 km", "a = 2.0 km"]
 
-    for ε in ε_range
-        a_val = ε * d_val
-        x_vals = range(200, 25000, length=50)
-        ur_diffs = Float64[]
-        uz_diffs = Float64[]
+for (i, a_val) in enumerate(radii)
+    Uz_max_mogi = Float64[]
+    Uz_max_mctigue = Float64[]
 
-        for x_val in x_vals
-            prob_m = NonlinearProblem(mogi_compiled, Dict([
-                mogi_compiled.G => G_val, mogi_compiled.ν => ν_val,
-                mogi_compiled.ΔP => ΔP_val, mogi_compiled.a => a_val,
-                mogi_compiled.d => d_val, mogi_compiled.x => x_val,
-            ]))
-            sol_m = solve(prob_m)
+    for d_val in d_range
+        x_near = 1.0  # near x=0
 
-            prob_mc = NonlinearProblem(mctigue_compiled, Dict([
-                mctigue_compiled.G => G_val, mctigue_compiled.ν => ν_val,
-                mctigue_compiled.ΔP => ΔP_val, mctigue_compiled.a => a_val,
-                mctigue_compiled.d => d_val, mctigue_compiled.x => x_val,
-            ]))
-            sol_mc = solve(prob_mc)
+        prob_m = NonlinearProblem(mogi_compiled, Dict([
+            mogi_compiled.G => G_val, mogi_compiled.ν => ν_val,
+            mogi_compiled.ΔP => ΔP_val, mogi_compiled.a => a_val,
+            mogi_compiled.d => d_val, mogi_compiled.x => x_near,
+        ]))
+        sol_m = solve(prob_m)
+        push!(Uz_max_mogi, sol_m[mogi_compiled.Uz] * 1000)
 
-            ur_m = sol_m[mogi_compiled.Ur]
-            ur_mc = sol_mc[mctigue_compiled.Ur]
-            uz_m = sol_m[mogi_compiled.Uz]
-            uz_mc = sol_mc[mctigue_compiled.Uz]
-
-            if abs(ur_m) > 1e-15
-                push!(ur_diffs, abs(ur_mc - ur_m) / abs(ur_m) * 100)
-            end
-            if abs(uz_m) > 1e-15
-                push!(uz_diffs, abs(uz_mc - uz_m) / abs(uz_m) * 100)
-            end
-        end
-
-        push!(diff_ur, isempty(ur_diffs) ? 0.0 : median(ur_diffs))
-        push!(diff_uz, isempty(uz_diffs) ? 0.0 : median(uz_diffs))
+        prob_mc = NonlinearProblem(mctigue_compiled, Dict([
+            mctigue_compiled.G => G_val, mctigue_compiled.ν => ν_val,
+            mctigue_compiled.ΔP => ΔP_val, mctigue_compiled.a => a_val,
+            mctigue_compiled.d => d_val, mctigue_compiled.x => x_near,
+        ]))
+        sol_mc = solve(prob_mc)
+        push!(Uz_max_mctigue, sol_mc[mctigue_compiled.Uz] * 1000)
     end
 
-    lines!(ax_ur3, collect(ε_range), diff_ur, color=depth_colors[j],
-        label=depth_labels[j])
-    lines!(ax_uz3, collect(ε_range), diff_uz, color=depth_colors[j],
-        label=depth_labels[j])
+    d_km = collect(d_range) ./ 1000
+    lines!(ax3, d_km, Uz_max_mogi, color=colors_m[i],
+        label="Mogi " * labels_a[i])
+    lines!(ax3, d_km, Uz_max_mctigue, color=colors_mc[i], linestyle=:dash,
+        label="McTigue " * labels_a[i])
 end
 
-axislegend(ax_ur3, position=:lt)
-axislegend(ax_uz3, position=:lt)
+axislegend(ax3, position=:rt)
 fig3
 ```
