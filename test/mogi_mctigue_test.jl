@@ -7,9 +7,9 @@
     using Geodynamics
 
     # Table 1 parameters from Taylor et al. (2021)
-    const G_val = 4.0e9    # Pa (4.0 GPa)
-    const ν_val = 0.25     # dimensionless
-    const ΔP_val = 2.0e6   # Pa (2.0 MPa)
+    G_val = 4.0e9    # Pa (4.0 GPa)
+    ν_val = 0.25     # dimensionless
+    ΔP_val = 2.0e6   # Pa (2.0 MPa)
 
     # Helper to create a NonlinearProblem and solve it
     function make_prob(compiled, params)
