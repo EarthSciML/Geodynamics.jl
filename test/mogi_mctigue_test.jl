@@ -3,6 +3,7 @@
     using ModelingToolkit
     using ModelingToolkit: mtkcompile
     using DynamicQuantities
+    using NonlinearSolve
     using Geodynamics
 
     # Table 1 parameters from Taylor et al. (2021)
@@ -10,7 +11,7 @@
     const ν_val = 0.25     # dimensionless
     const ΔP_val = 2.0e6   # Pa (2.0 MPa)
 
-    # Helper to create a NonlinearProblem using the non-deprecated API
+    # Helper to create a NonlinearProblem and solve it
     function make_prob(compiled, params)
         NonlinearProblem(compiled, Dict(params))
     end
@@ -300,6 +301,56 @@ end
         @test Ur_vals[i] > Ur_vals[i + 1]
         @test Uz_vals[i] > Uz_vals[i + 1]
     end
+end
+
+@testitem "Kīlauea Deflation Event (Table 3)" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
+    # Test with Table 3 parameters: Kīlauea June 2007 deflation event
+    # ΔP = -3.73 MPa (negative = deflation), G = 4.0 GPa, ν = 0.25
+    ΔP_kil = -3.73e6  # Pa
+    a_val = 800.0      # m (within 0.40-1.10 km range)
+    d_val = 2000.0     # m (within 1.00-3.00 km range)
+    x_val = 3000.0     # m
+
+    # Mogi model with deflation
+    sys = MogiModel()
+    compiled = mtkcompile(sys)
+
+    params = [
+        compiled.G => G_val, compiled.ν => ν_val,
+        compiled.ΔP => ΔP_kil, compiled.a => a_val,
+        compiled.d => d_val, compiled.x => x_val
+    ]
+    sol = solve(make_prob(compiled, params))
+
+    # Negative overpressure (deflation) → negative displacements
+    @test sol[compiled.Ur] < 0  # inward radial displacement
+    @test sol[compiled.Uz] < 0  # subsidence
+
+    # Verify against hand computation
+    R_expected = sqrt(x_val^2 + d_val^2)
+    Ur_expected = a_val^3 * ΔP_kil * (1 - ν_val) * x_val / (G_val * R_expected^3)
+    Uz_expected = a_val^3 * ΔP_kil * (1 - ν_val) * d_val / (G_val * R_expected^3)
+    @test sol[compiled.Ur] ≈ Ur_expected rtol = 1e-10
+    @test sol[compiled.Uz] ≈ Uz_expected rtol = 1e-10
+
+    # McTigue with same parameters
+    mctigue_sys = McTigueModel()
+    mctigue_compiled = mtkcompile(mctigue_sys)
+
+    params_mc = [
+        mctigue_compiled.G => G_val, mctigue_compiled.ν => ν_val,
+        mctigue_compiled.ΔP => ΔP_kil, mctigue_compiled.a => a_val,
+        mctigue_compiled.d => d_val, mctigue_compiled.x => x_val
+    ]
+    sol_mc = solve(make_prob(mctigue_compiled, params_mc))
+
+    # McTigue also negative for deflation
+    @test sol_mc[mctigue_compiled.Ur] < 0
+    @test sol_mc[mctigue_compiled.Uz] < 0
+
+    # McTigue magnitudes should be larger than Mogi for ε = 0.4
+    @test abs(sol_mc[mctigue_compiled.Ur]) > abs(sol[compiled.Ur])
+    @test abs(sol_mc[mctigue_compiled.Uz]) > abs(sol[compiled.Uz])
 end
 
 @testitem "McTigue Always Greater Than Mogi for ε > 0" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin

@@ -95,6 +95,21 @@ analysis below:
 | ``U_r``         | Horizontal-radial displacement | m     | result       |
 | ``U_z``         | Vertical displacement          | m     | result       |
 
+### Reference Parameters for Kīlauea Events (Table 3, Taylor et al., 2021)
+
+Model parameters for two intrusion events at Kīlauea Volcano, Hawai'i:
+
+| Symbol          | Definition       | Units | Value(s)              |
+|:--------------- |:---------------- |:----- |:--------------------- |
+| ``G``           | Shear modulus    | GPa   | 4.0                   |
+| ``\nu``         | Poisson's ratio  | --    | 0.25                  |
+| ``\Delta P``    | Overpressure     | MPa   | −3.73, −3.55          |
+| ``a``           | Radius           | km    | 0.40 -- 1.10          |
+| ``d``           | Depth            | km    | 1.00 -- 3.00          |
+
+Source overpressures are inferred from tilt measurements; −3.73 and −3.55 MPa are
+overpressures for events in June 2007 and March 2011 respectively.
+
 ## Analysis
 
 ### Displacement Profiles (cf. Figure 1 geometry)
@@ -233,6 +248,74 @@ end
 
 axislegend(ax, position = :lt)
 fig2
+```
+
+### Kīlauea Deflation Event (cf. Table 3 and Section 4.5)
+
+Surface displacement profiles predicted by the Mogi and McTigue models for the
+June 2007 Kīlauea deflation event (``\Delta P = -3.73`` MPa), using the best-fitting
+source parameters from Taylor et al. (2021). The negative overpressure corresponds
+to deflation (subsidence and inward radial displacement).
+
+```@example mogi_mctigue
+fig_kil = Figure(size = (900, 600))
+ax_ur_kil = Axis(fig_kil[1, 1], xlabel = "Distance x (km)", ylabel = "Ur (mm)",
+    title = "Kīlauea June 2007: Horizontal-Radial Displacement")
+ax_uz_kil = Axis(fig_kil[2, 1], xlabel = "Distance x (km)", ylabel = "Uz (mm)",
+    title = "Kīlauea June 2007: Vertical Displacement")
+
+# Table 3 parameters for June 2007 event
+G_kil = 4.0e9       # Pa
+ν_kil = 0.25
+ΔP_kil = -3.73e6    # Pa (deflation)
+
+# Representative source geometries within the Table 3 range
+cases = [
+    (a = 500.0, d = 2000.0, label = "a=0.5km, d=2km (ε=0.25)"),
+    (a = 800.0, d = 2000.0, label = "a=0.8km, d=2km (ε=0.40)"),
+    (a = 800.0, d = 3000.0, label = "a=0.8km, d=3km (ε=0.27)"),
+]
+case_colors_m = [:blue, :red, :green]
+case_colors_mc = [:cyan, :orange, :lightgreen]
+
+x_range_kil = range(100, 15000, length = 150)
+
+for (i, c) in enumerate(cases)
+    Ur_m = Float64[]
+    Uz_m = Float64[]
+    Ur_mc = Float64[]
+    Uz_mc = Float64[]
+
+    for x_val in x_range_kil
+        prob_m = NonlinearProblem(mogi_compiled,
+            Dict([mogi_compiled.G => G_kil, mogi_compiled.ν => ν_kil,
+                  mogi_compiled.ΔP => ΔP_kil, mogi_compiled.a => c.a,
+                  mogi_compiled.d => c.d, mogi_compiled.x => x_val]))
+        sol_m = solve(prob_m)
+        push!(Ur_m, sol_m[mogi_compiled.Ur] * 1000)
+        push!(Uz_m, sol_m[mogi_compiled.Uz] * 1000)
+
+        prob_mc = NonlinearProblem(mctigue_compiled,
+            Dict([mctigue_compiled.G => G_kil, mctigue_compiled.ν => ν_kil,
+                  mctigue_compiled.ΔP => ΔP_kil, mctigue_compiled.a => c.a,
+                  mctigue_compiled.d => c.d, mctigue_compiled.x => x_val]))
+        sol_mc = solve(prob_mc)
+        push!(Ur_mc, sol_mc[mctigue_compiled.Ur] * 1000)
+        push!(Uz_mc, sol_mc[mctigue_compiled.Uz] * 1000)
+    end
+
+    x_km = collect(x_range_kil) ./ 1000
+    lines!(ax_ur_kil, x_km, Ur_m, color = case_colors_m[i], label = "Mogi " * c.label)
+    lines!(ax_ur_kil, x_km, Ur_mc, color = case_colors_mc[i], linestyle = :dash,
+        label = "McTigue " * c.label)
+    lines!(ax_uz_kil, x_km, Uz_m, color = case_colors_m[i], label = "Mogi " * c.label)
+    lines!(ax_uz_kil, x_km, Uz_mc, color = case_colors_mc[i], linestyle = :dash,
+        label = "McTigue " * c.label)
+end
+
+axislegend(ax_ur_kil, position = :rb)
+axislegend(ax_uz_kil, position = :rb)
+fig_kil
 ```
 
 ### Maximum Displacement vs. Source Depth
