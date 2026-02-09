@@ -1,0 +1,4 @@
+# Typos configuration for Geodynamics.jl
+# See: https://github.com/crate-ci/typos
+
+[default.extend-words]
