@@ -99,13 +99,13 @@ analysis below:
 
 Model parameters for two intrusion events at Kīlauea Volcano, Hawai'i:
 
-| Symbol          | Definition       | Units | Value(s)              |
-|:--------------- |:---------------- |:----- |:--------------------- |
-| ``G``           | Shear modulus    | GPa   | 4.0                   |
-| ``\nu``         | Poisson's ratio  | --    | 0.25                  |
-| ``\Delta P``    | Overpressure     | MPa   | −3.73, −3.55          |
-| ``a``           | Radius           | km    | 0.40 -- 1.10          |
-| ``d``           | Depth            | km    | 1.00 -- 3.00          |
+| Symbol       | Definition      | Units | Value(s)     |
+|:------------ |:--------------- |:----- |:------------ |
+| ``G``        | Shear modulus   | GPa   | 4.0          |
+| ``\nu``      | Poisson's ratio | --    | 0.25         |
+| ``\Delta P`` | Overpressure    | MPa   | −3.73, −3.55 |
+| ``a``        | Radius          | km    | 0.40 -- 1.10 |
+| ``d``        | Depth           | km    | 1.00 -- 3.00 |
 
 Source overpressures are inferred from tilt measurements; −3.73 and −3.55 MPa are
 overpressures for events in June 2007 and March 2011 respectively.
@@ -273,7 +273,7 @@ G_kil = 4.0e9       # Pa
 cases = [
     (a = 500.0, d = 2000.0, label = "a=0.5km, d=2km (ε=0.25)"),
     (a = 800.0, d = 2000.0, label = "a=0.8km, d=2km (ε=0.40)"),
-    (a = 800.0, d = 3000.0, label = "a=0.8km, d=3km (ε=0.27)"),
+    (a = 800.0, d = 3000.0, label = "a=0.8km, d=3km (ε=0.27)")
 ]
 case_colors_m = [:blue, :red, :green]
 case_colors_mc = [:cyan, :orange, :lightgreen]
@@ -289,16 +289,16 @@ for (i, c) in enumerate(cases)
     for x_val in x_range_kil
         prob_m = NonlinearProblem(mogi_compiled,
             Dict([mogi_compiled.G => G_kil, mogi_compiled.ν => ν_kil,
-                  mogi_compiled.ΔP => ΔP_kil, mogi_compiled.a => c.a,
-                  mogi_compiled.d => c.d, mogi_compiled.x => x_val]))
+                mogi_compiled.ΔP => ΔP_kil, mogi_compiled.a => c.a,
+                mogi_compiled.d => c.d, mogi_compiled.x => x_val]))
         sol_m = solve(prob_m)
         push!(Ur_m, sol_m[mogi_compiled.Ur] * 1000)
         push!(Uz_m, sol_m[mogi_compiled.Uz] * 1000)
 
         prob_mc = NonlinearProblem(mctigue_compiled,
             Dict([mctigue_compiled.G => G_kil, mctigue_compiled.ν => ν_kil,
-                  mctigue_compiled.ΔP => ΔP_kil, mctigue_compiled.a => c.a,
-                  mctigue_compiled.d => c.d, mctigue_compiled.x => x_val]))
+                mctigue_compiled.ΔP => ΔP_kil, mctigue_compiled.a => c.a,
+                mctigue_compiled.d => c.d, mctigue_compiled.x => x_val]))
         sol_mc = solve(prob_mc)
         push!(Ur_mc, sol_mc[mctigue_compiled.Ur] * 1000)
         push!(Uz_mc, sol_mc[mctigue_compiled.Uz] * 1000)

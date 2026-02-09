@@ -78,15 +78,18 @@ end
 @testitem "Mogi Equation Correctness" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
     # Test with Table 1 parameters: G=4 GPa, ν=0.25, ΔP=2 MPa
     # Source: a=1 km, d=4 km; evaluate at x=5 km
+    # Reference values independently computed from Eqs. 1-2:
+    #   R = sqrt(5000^2 + 4000^2) = 6403.12423743...
+    #   Ur = 1e9 * 2e6 * 0.75 * 5000 / (4e9 * R^3) = 7.13834...e-3 m
+    #   Uz = 1e9 * 2e6 * 0.75 * 4000 / (4e9 * R^3) = 5.71068...e-3 m
 
     a_val=1000.0   # m
     d_val=4000.0   # m
     x_val=5000.0   # m
 
-    # Expected values (hand-computed from Eqs. 1-2)
-    R_expected=sqrt(x_val^2+d_val^2)
-    Ur_expected=a_val^3*ΔP_val*(1-ν_val)*x_val/(G_val*R_expected^3)
-    Uz_expected=a_val^3*ΔP_val*(1-ν_val)*d_val/(G_val*R_expected^3)
+    R_ref=6403.1242374328485  # m, precomputed
+    Ur_ref=0.00714209276929601  # m, precomputed
+    Uz_ref=0.0057136742154368075  # m, precomputed
 
     # Evaluate the compiled model
     sys=MogiModel()
@@ -103,28 +106,25 @@ end
         ])
     sol=solve(prob)
 
-    @test sol[compiled.R] ≈ R_expected rtol=1e-10
-    @test sol[compiled.Ur] ≈ Ur_expected rtol=1e-10
-    @test sol[compiled.Uz] ≈ Uz_expected rtol=1e-10
+    @test sol[compiled.R] ≈ R_ref rtol=1e-10
+    @test sol[compiled.Ur] ≈ Ur_ref rtol=1e-10
+    @test sol[compiled.Uz] ≈ Uz_ref rtol=1e-10
 end
 
 @testitem "McTigue Equation Correctness" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
     # Test with Table 1 parameters: G=4 GPa, ν=0.25, ΔP=2 MPa
     # Source: a=1 km, d=4 km; evaluate at x=5 km
+    # Reference values independently computed from Eqs. 3-4:
+    #   R = 6403.124..., correction = 1.005261...,
+    #   Ur = 0.007180..., Uz = 0.005744...
 
     a_val=1000.0   # m
     d_val=4000.0   # m
     x_val=5000.0   # m
 
-    # Expected values (hand-computed from Eqs. 3-4)
-    R_expected=sqrt(x_val^2+d_val^2)
-    ε=a_val/d_val
-    correction=1+ε^3*(
-        (1+ν_val)/(2*(-7+5ν_val))+
-    15*d_val^2*(-2+ν_val)/(4*R_expected^2*(-7+5ν_val))
-    )
-    Ur_expected=a_val^3*ΔP_val*(1-ν_val)*x_val/(G_val*R_expected^3)*correction
-    Uz_expected=a_val^3*ΔP_val*(1-ν_val)*d_val/(G_val*R_expected^3)*correction
+    R_ref=6403.1242374328485  # m, precomputed
+    Ur_ref=0.0071796659144155  # m, precomputed
+    Uz_ref=0.005743732731532399  # m, precomputed
 
     # Evaluate the compiled model
     sys=McTigueModel()
@@ -141,9 +141,9 @@ end
         ])
     sol=solve(prob)
 
-    @test sol[compiled.R] ≈ R_expected rtol=1e-10
-    @test sol[compiled.Ur] ≈ Ur_expected rtol=1e-10
-    @test sol[compiled.Uz] ≈ Uz_expected rtol=1e-10
+    @test sol[compiled.R] ≈ R_ref rtol=1e-10
+    @test sol[compiled.Ur] ≈ Ur_ref rtol=1e-10
+    @test sol[compiled.Uz] ≈ Uz_ref rtol=1e-10
 end
 
 @testitem "McTigue Reduces to Mogi for Small ε" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
@@ -306,43 +306,40 @@ end
 @testitem "Kīlauea Deflation Event (Table 3)" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
     # Test with Table 3 parameters: Kīlauea June 2007 deflation event
     # ΔP = -3.73 MPa (negative = deflation), G = 4.0 GPa, ν = 0.25
-    ΔP_kil = -3.73e6  # Pa
-    a_val = 800.0      # m (within 0.40-1.10 km range)
-    d_val = 2000.0     # m (within 1.00-3.00 km range)
-    x_val = 3000.0     # m
+    ΔP_kil=-3.73e6  # Pa
+    a_val=800.0      # m (within 0.40-1.10 km range)
+    d_val=2000.0     # m (within 1.00-3.00 km range)
+    x_val=3000.0     # m
 
     # Mogi model with deflation
-    sys = MogiModel()
-    compiled = mtkcompile(sys)
+    sys=MogiModel()
+    compiled=mtkcompile(sys)
 
-    params = [
-        compiled.G => G_val, compiled.ν => ν_val,
-        compiled.ΔP => ΔP_kil, compiled.a => a_val,
-        compiled.d => d_val, compiled.x => x_val
+    params=[
+        compiled.G=>G_val, compiled.ν=>ν_val,
+        compiled.ΔP=>ΔP_kil, compiled.a=>a_val,
+        compiled.d=>d_val, compiled.x=>x_val
     ]
-    sol = solve(make_prob(compiled, params))
+    sol=solve(make_prob(compiled, params))
 
     # Negative overpressure (deflation) → negative displacements
     @test sol[compiled.Ur] < 0  # inward radial displacement
     @test sol[compiled.Uz] < 0  # subsidence
 
-    # Verify against hand computation
-    R_expected = sqrt(x_val^2 + d_val^2)
-    Ur_expected = a_val^3 * ΔP_kil * (1 - ν_val) * x_val / (G_val * R_expected^3)
-    Uz_expected = a_val^3 * ΔP_kil * (1 - ν_val) * d_val / (G_val * R_expected^3)
-    @test sol[compiled.Ur] ≈ Ur_expected rtol = 1e-10
-    @test sol[compiled.Uz] ≈ Uz_expected rtol = 1e-10
+    # Verify against precomputed reference values from Eqs. 1-2 with Table 3 params
+    @test sol[compiled.Ur] ≈ -0.022918505338191925 rtol=1e-10
+    @test sol[compiled.Uz] ≈ -0.015279003558794616 rtol=1e-10
 
     # McTigue with same parameters
-    mctigue_sys = McTigueModel()
-    mctigue_compiled = mtkcompile(mctigue_sys)
+    mctigue_sys=McTigueModel()
+    mctigue_compiled=mtkcompile(mctigue_sys)
 
-    params_mc = [
-        mctigue_compiled.G => G_val, mctigue_compiled.ν => ν_val,
-        mctigue_compiled.ΔP => ΔP_kil, mctigue_compiled.a => a_val,
-        mctigue_compiled.d => d_val, mctigue_compiled.x => x_val
+    params_mc=[
+        mctigue_compiled.G=>G_val, mctigue_compiled.ν=>ν_val,
+        mctigue_compiled.ΔP=>ΔP_kil, mctigue_compiled.a=>a_val,
+        mctigue_compiled.d=>d_val, mctigue_compiled.x=>x_val
     ]
-    sol_mc = solve(make_prob(mctigue_compiled, params_mc))
+    sol_mc=solve(make_prob(mctigue_compiled, params_mc))
 
     # McTigue also negative for deflation
     @test sol_mc[mctigue_compiled.Ur] < 0
@@ -351,6 +348,96 @@ end
     # McTigue magnitudes should be larger than Mogi for ε = 0.4
     @test abs(sol_mc[mctigue_compiled.Ur]) > abs(sol[compiled.Ur])
     @test abs(sol_mc[mctigue_compiled.Uz]) > abs(sol[compiled.Uz])
+end
+
+@testitem "Mogi Ur Maximum at x_crit" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
+    # The Mogi model predicts Ur is maximized at x_crit = d/sqrt(2)
+    # This follows from setting dUr/dx = 0 in Eq. 1
+    a_val=1000.0
+    d_val=4000.0
+
+    sys=MogiModel()
+    compiled=mtkcompile(sys)
+
+    x_crit=d_val/sqrt(2)
+
+    # Evaluate at x_crit and nearby points
+    params_crit=[
+        compiled.G=>G_val, compiled.ν=>ν_val,
+        compiled.ΔP=>ΔP_val, compiled.a=>a_val,
+        compiled.d=>d_val, compiled.x=>x_crit
+    ]
+    sol_crit=solve(make_prob(compiled, params_crit))
+    Ur_max=sol_crit[compiled.Ur]
+
+    # Check that Ur_max matches precomputed reference value
+    @test Ur_max ≈ 0.009021097956087904 rtol=1e-10
+
+    # Verify Ur at x_crit is greater than at nearby points
+    for x_offset in [x_crit-500.0, x_crit+500.0]
+        params_off=[
+            compiled.G=>G_val, compiled.ν=>ν_val,
+            compiled.ΔP=>ΔP_val, compiled.a=>a_val,
+            compiled.d=>d_val, compiled.x=>x_offset
+        ]
+        sol_off=solve(make_prob(compiled, params_off))
+        @test sol_off[compiled.Ur] < Ur_max
+    end
+end
+
+@testitem "Mogi Uz_max at x=0" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
+    # At x≈0, Uz = a^3 * ΔP * (1-ν) / (G * d^2)
+    # Precomputed reference value for a=1km, d=4km, Table 1 params
+    a_val=1000.0
+    d_val=4000.0
+
+    sys=MogiModel()
+    compiled=mtkcompile(sys)
+
+    params=[
+        compiled.G=>G_val, compiled.ν=>ν_val,
+        compiled.ΔP=>ΔP_val, compiled.a=>a_val,
+        compiled.d=>d_val, compiled.x=>0.001  # near x=0
+    ]
+    sol=solve(make_prob(compiled, params))
+
+    # Uz_max = a^3 * ΔP * (1-ν) / (G * d^2) = 0.0234375 m
+    @test sol[compiled.Uz] ≈ 0.0234375 rtol=1e-6
+end
+
+@testitem "McTigue Correction Magnitude" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
+    # Verify the McTigue correction factor magnitude for specific ε values
+    # For ν=0.25, ε=0.25 (a=1km, d=4km), the correction should be ≈1.0053
+    a_val=1000.0
+    d_val=4000.0
+    x_val=5000.0
+
+    mogi_sys=MogiModel()
+    mogi_compiled=mtkcompile(mogi_sys)
+    mctigue_sys=McTigueModel()
+    mctigue_compiled=mtkcompile(mctigue_sys)
+
+    params_mogi=[
+        mogi_compiled.G=>G_val, mogi_compiled.ν=>ν_val,
+        mogi_compiled.ΔP=>ΔP_val, mogi_compiled.a=>a_val,
+        mogi_compiled.d=>d_val, mogi_compiled.x=>x_val
+    ]
+    params_mctigue=[
+        mctigue_compiled.G=>G_val, mctigue_compiled.ν=>ν_val,
+        mctigue_compiled.ΔP=>ΔP_val, mctigue_compiled.a=>a_val,
+        mctigue_compiled.d=>d_val, mctigue_compiled.x=>x_val
+    ]
+
+    sol_mogi=solve(make_prob(mogi_compiled, params_mogi))
+    sol_mctigue=solve(make_prob(mctigue_compiled, params_mctigue))
+
+    # McTigue/Mogi ratio should equal the correction factor ≈ 1.005261
+    correction=sol_mctigue[mctigue_compiled.Ur]/sol_mogi[mogi_compiled.Ur]
+    @test correction ≈ 1.0052608032873807 rtol=1e-10
+
+    # Same correction applies to Uz
+    correction_uz=sol_mctigue[mctigue_compiled.Uz]/sol_mogi[mogi_compiled.Uz]
+    @test correction_uz ≈ correction rtol=1e-10
 end
 
 @testitem "McTigue Always Greater Than Mogi for ε > 0" setup=[MogiMcTigueSetup] tags=[:mogi_mctigue] begin
