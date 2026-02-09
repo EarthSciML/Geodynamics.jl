@@ -37,12 +37,13 @@ Earthq. Res. Inst. 36, 99–134. As presented in Taylor et al. (2021),
 Eqs. 1–2.
 
 **Parameters:**
-- `G`: Shear modulus (Pa)
-- `ν`: Poisson's ratio (dimensionless)
-- `ΔP`: Source overpressure (Pa)
-- `a`: Source radius (m)
-- `d`: Source depth (m)
-- `x`: Horizontal distance from source (m)
+
+  - `G`: Shear modulus (Pa)
+  - `ν`: Poisson's ratio (dimensionless)
+  - `ΔP`: Source overpressure (Pa)
+  - `a`: Source radius (m)
+  - `d`: Source depth (m)
+  - `x`: Horizontal distance from source (m)
 """
 @component function MogiModel(; name = :MogiModel)
     @constants begin
@@ -72,7 +73,7 @@ Eqs. 1–2.
         Ur ~ a^3 * ΔP * (1 - ν) * x / (G * R^3),
 
         # Eq. 2 — Mogi vertical displacement
-        Uz ~ a^3 * ΔP * (1 - ν) * d / (G * R^3),
+        Uz ~ a^3 * ΔP * (1 - ν) * d / (G * R^3)
     ]
 
     return System(eqs, t; name)
@@ -95,12 +96,13 @@ spherical magma body: resolution of the point source paradox. J. Geophys. Res.
 92 (B12), 12931. As presented in Taylor et al. (2021), Eqs. 3–4.
 
 **Parameters:**
-- `G`: Shear modulus (Pa)
-- `ν`: Poisson's ratio (dimensionless)
-- `ΔP`: Source overpressure (Pa)
-- `a`: Source radius (m)
-- `d`: Source depth (m)
-- `x`: Horizontal distance from source (m)
+
+  - `G`: Shear modulus (Pa)
+  - `ν`: Poisson's ratio (dimensionless)
+  - `ΔP`: Source overpressure (Pa)
+  - `a`: Source radius (m)
+  - `d`: Source depth (m)
+  - `x`: Horizontal distance from source (m)
 """
 @component function McTigueModel(; name = :McTigueModel)
     @constants begin
@@ -129,20 +131,24 @@ spherical magma body: resolution of the point source paradox. J. Geophys. Res.
         R ~ (x^2 / one_m^2 + d^2 / one_m^2)^0.5 * one_m,
 
         # Eq. 3 — McTigue horizontal-radial displacement
-        Ur ~ a^3 * ΔP * (1 - ν) * x / (G * R^3) * (
-            1 + (a / d)^3 * (
-                (1 + ν) / (2 * (-7 + 5ν)) +
-                15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
-            )
+        Ur ~
+        a^3 * ΔP * (1 - ν) * x / (G * R^3) * (
+            1 +
+            (a / d)^3 * (
+            (1 + ν) / (2 * (-7 + 5ν)) +
+            15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
+        )
         ),
 
         # Eq. 4 — McTigue vertical displacement
-        Uz ~ a^3 * ΔP * (1 - ν) * d / (G * R^3) * (
-            1 + (a / d)^3 * (
-                (1 + ν) / (2 * (-7 + 5ν)) +
-                15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
-            )
-        ),
+        Uz ~
+        a^3 * ΔP * (1 - ν) * d / (G * R^3) * (
+            1 +
+            (a / d)^3 * (
+            (1 + ν) / (2 * (-7 + 5ν)) +
+            15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
+        )
+        )
     ]
 
     return System(eqs, t; name)

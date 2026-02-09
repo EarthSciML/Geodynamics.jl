@@ -12,13 +12,13 @@ makedocs(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://geodynamics.earthsci.dev",
         assets = String[],
-        repolink = "https://github.com/EarthSciML/Geodynamics.jl",
+        repolink = "https://github.com/EarthSciML/Geodynamics.jl"
     ),
     pages = [
         "Home" => "index.md",
         "Mogi & McTigue Models" => "mogi_mctigue.md",
-        "API" => "api.md",
-    ],
+        "API" => "api.md"
+    ]
 )
 
 deploydocs(; repo = "github.com/EarthSciML/Geodynamics.jl.git")
