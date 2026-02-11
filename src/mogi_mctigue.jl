@@ -73,7 +73,7 @@ Eqs. 1–2.
         Ur ~ a^3 * ΔP * (1 - ν) * x / (G * R^3),
 
         # Eq. 2 — Mogi vertical displacement
-        Uz ~ a^3 * ΔP * (1 - ν) * d / (G * R^3)
+        Uz ~ a^3 * ΔP * (1 - ν) * d / (G * R^3),
     ]
 
     return System(eqs, t; name)
@@ -132,23 +132,23 @@ spherical magma body: resolution of the point source paradox. J. Geophys. Res.
 
         # Eq. 3 — McTigue horizontal-radial displacement
         Ur ~
-        a^3 * ΔP * (1 - ν) * x / (G * R^3) * (
+            a^3 * ΔP * (1 - ν) * x / (G * R^3) * (
             1 +
-            (a / d)^3 * (
-            (1 + ν) / (2 * (-7 + 5ν)) +
-            15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
-        )
+                (a / d)^3 * (
+                (1 + ν) / (2 * (-7 + 5ν)) +
+                    15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
+            )
         ),
 
         # Eq. 4 — McTigue vertical displacement
         Uz ~
-        a^3 * ΔP * (1 - ν) * d / (G * R^3) * (
+            a^3 * ΔP * (1 - ν) * d / (G * R^3) * (
             1 +
-            (a / d)^3 * (
-            (1 + ν) / (2 * (-7 + 5ν)) +
-            15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
-        )
-        )
+                (a / d)^3 * (
+                (1 + ν) / (2 * (-7 + 5ν)) +
+                    15 * d^2 * (-2 + ν) / (4 * R^2 * (-7 + 5ν))
+            )
+        ),
     ]
 
     return System(eqs, t; name)

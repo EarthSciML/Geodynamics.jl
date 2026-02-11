@@ -2,7 +2,7 @@ module Geodynamics
 
 using DocStringExtensions
 using ModelingToolkit: t, D, System, @variables, @parameters,
-                       @constants, @component
+    @constants, @component
 using DynamicQuantities: @u_str
 using EarthSciMLBase
 
