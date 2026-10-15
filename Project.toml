@@ -10,7 +10,7 @@ EarthSciMLBase = "e53f1632-a13c-4728-9402-0c66d48804b0"
 ModelingToolkit = "961ee093-0014-501f-94e3-6117800e7a78"
 
 [compat]
-DocStringExtensions = "0.9.5"
+DocStringExtensions = "0.9.5, 0.10"
 DynamicQuantities = "1"
 EarthSciMLBase = "0.24"
 ModelingToolkit = "10"
